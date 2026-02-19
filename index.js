@@ -48,7 +48,7 @@ async function startAira() {
         const msgText = (m.message.conversation || m.message.extendedTextMessage?.text || "").toLowerCase();
 
         if (msgText === ".allmenu" || msgText === ".menu") {
-            const menuImage = "airaxmd.jpg"; // Ivide ninte image link
+            const menuImage = "dream.ab.digital.art-20260219-0002.jpg"; // Ivide ninte image link
             
             const menuTemplate = `
 ╭──────────────〔 🤖 **AIRA XMD** 〕──────────────
