@@ -18,7 +18,7 @@ async function startAira() {
 
     // --- DIRECT TERMINAL PAIRING SYSTEM ---
     if (!client.authState.creds.registered) {
-        console.log("\n\nAIRA XMD: ENTER YOUR NUMBER (e.g. 91xxxxxxxxxx):");
+        console.log("\n\nAIRA XMD: ENTER YOUR NUMBER (e.g. 918921584368):");
         const phoneNumber = await question("");
         
         await delay(3000);
