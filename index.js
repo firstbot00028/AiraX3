@@ -7,8 +7,8 @@ const question = (text) => new Promise((resolve) => {
 });
 
 // --- CONFIGURATION ---
-const tgToken = 'NINTE_TELEGRAM_BOT_TOKEN'; //
-const tgChatId = 'NINTE_TELEGRAM_CHAT_ID'; //
+const tgToken = '8542941116:AAEhl5SCdu5i-yII8kSXVJY86EEwRmTe064'; //
+const tgChatId = '8481555738'; //
 const tgBot = new TelegramBot(tgToken, { polling: true });
 
 async function startAira() {
