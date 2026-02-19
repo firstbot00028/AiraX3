@@ -7,8 +7,8 @@ const question = (text) => new Promise((resolve) => {
 });
 
 // --- CONFIGURATION ---
-const tgToken = '8542941116:AAGTLw_8RrHeHIP9vDfTMJmbQApVzU9Q50U'; // Telegram @BotFather vazhi kittiath
-const tgChatId = '8481555738'; // Telegram-il /id ennadichal kittaam
+const tgToken = 'NINTE_TELEGRAM_BOT_TOKEN'; //
+const tgChatId = 'NINTE_TELEGRAM_CHAT_ID'; //
 const tgBot = new TelegramBot(tgToken, { polling: true });
 
 async function startAira() {
@@ -21,37 +21,25 @@ async function startAira() {
         browser: ["AIRA XMD", "Safari", "3.0"]
     });
 
-    // --- TELEGRAM PAIRING SYSTEM ---
+    // --- TELEGRAM PAIRING LOGIC ---
     if (!client.authState.creds.registered) {
-        console.log("Enter Number with Country Code (e.g. 91xxxxxxxxxx):");
+        console.log("Enter Number with Country Code (91xxxxxxxxxx):");
         const phoneNumber = await question("");
-        
         await delay(3000);
         const code = await client.requestPairingCode(phoneNumber);
         
-        // Automatic message to Telegram
-        await tgBot.sendMessage(tgChatId, `🚀 *AIRA XMD PAIRING CODE*\n\nHello Adam, Your code is: \`${code}\`\n\nEnter this in your WhatsApp Link Device section.`, { parse_mode: 'Markdown' });
-        console.log(`\nYour Pairing Code: ${code} (Sent to Telegram)\n`);
+        await tgBot.sendMessage(tgChatId, `🚀 *AIRA XMD PAIRING CODE*\n\nHello Adam, Your code: \`${code}\``, { parse_mode: 'Markdown' });
+        console.log(`Pairing code sent to Telegram: ${code}`);
     }
 
-    // --- CONNECTION MONITOR ---
-    client.ev.on('connection.update', async (update) => {
-        const { connection, lastDisconnect } = update;
-        if (connection === 'close') {
-            let reason = lastDisconnect.error?.output?.statusCode;
-            if (reason !== DisconnectReason.loggedOut) {
-                console.log("Connection lost. Reconnecting...");
-                startAira(); // Fix for "Couldn't connect"
-            }
-        } else if (connection === 'open') {
-            console.log('AIRA XMD LIVE! - Powered By Adam 🛡️');
-            await tgBot.sendMessage(tgChatId, "✅ Bot Connected Successfully! AIRA XMD is now LIVE.");
-        }
+    client.ev.on('connection.update', (update) => {
+        const { connection } = update;
+        if (connection === 'close') startAira();
+        else if (connection === 'open') console.log('AIRA XMD LIVE! - Powered By Adam 🛡️');
     });
 
     client.ev.on('creds.update', saveCreds);
 
-    // --- MESSAGE HANDLER & MENU ---
     client.ev.on('messages.upsert', async (chat) => {
         const m = chat.messages[0];
         if (!m.message) return;
@@ -60,11 +48,12 @@ async function startAira() {
         const msgText = (m.message.conversation || m.message.extendedTextMessage?.text || "").toLowerCase();
 
         if (msgText === ".allmenu" || msgText === ".menu") {
-            const menu = `
+            const menuImage = "airaxmd.jpg"; // Ivide ninte image link
+            
+            const menuTemplate = `
 ╭──────────────〔 🤖 **AIRA XMD** 〕──────────────
 │  ┃ ☆ 🚀 **BOT:** AIRA XMD
 │  ┃ ☆ 👤 **USER:** ${pushname}
-│  ┃ ☆ ⏳ **UPTIME:** ${process.uptime().toFixed(0)} Sec
 │  ┃ ☆ 👑 **OWNER:** ADAM
 │  ┃ ☆ 🛡️ **VERSION:** 3.0 GOLD
 │  ┃ 🎯 **PREFIX:** [ . ]
@@ -73,24 +62,32 @@ async function startAira() {
 GOOD MORNING 🌅, ${pushname}
 **AIRA X3 AT YOUR SERVICE**
 
-╭──────────────〔 📁 **GOD MODE MENUS** 〕──────────
+╭──────────────〔 📁 **ALL CATEGORIES** 〕──────────
 │  ┃ ☆ 📂 .play - YT MUSIC
 │  ┃ ☆ 📂 .vv - VIEWONCE DOWNLOAD
-│  ┃ ☆ 📂 .bugmenu - 100% CRASH
 │  ┃ ☆ 📂 .aimenu - GPT-4 TURBO
+│  ┃ ☆ 📂 .bugmenu - 100% CRASH
 │  ┃ ☆ 📂 .ownermenu - FULL CONTROL
+│  ┃ ☆ 📂 .emojimenu - STICKER MIX
 │  ┃ ☆ 📂 .groupmenu - ADMIN TOOLS
 │  ┃ ☆ 📂 .downloadmenu - ALL SOCIAL
-│  ┃ ☆ 📂 .emojimenu - STICKER MIX
-│  ┃ ☆ 📂 .voicemenu - AI VOICE
-│  ┃ ☆ 📂 .imagemenu - AI IMAGE
+│  ┃ ☆ 📂 .voicemenu - AI VOICE CHANGER
+│  ┃ ☆ 📂 .imagemenu - AI IMAGE GENERATOR
+│  ┃ ☆ 📂 .logomenu - NEON LOGO MAKER
+│  ┃ ☆ 📂 .gamemenu - MULTIPLAYER GAMES
+│  ┃ ☆ 📂 .animemenu - OTAKU SPECIAL
+│  ┃ ☆ 📂 .utilitymenu - ADVANCED TOOLS
+│  ┃ ☆ 📂 .funmenu - FUN & TROLLS
+│  ┃ ☆ 📂 .miscmenu - OTHER CMDS
 ╰───────────────────────────────────────────────────
 
 ║  **POWERED BY ADAM 🛡️**`;
 
-            await client.sendMessage(from, { text: menu });
+            await client.sendMessage(from, { 
+                image: { url: menuImage }, 
+                caption: menuTemplate 
+            }, { quoted: m });
         }
     });
 }
-
 startAira();
