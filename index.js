@@ -23,7 +23,7 @@ async function startAira() {
 
     // --- TELEGRAM PAIRING LOGIC ---
     if (!client.authState.creds.registered) {
-        console.log("Enter Number with Country Code (91xxxxxxxxxx):");
+        console.log("Enter Number with Country Code (918921584368):");
         const phoneNumber = await question("");
         await delay(3000);
         const code = await client.requestPairingCode(phoneNumber);
