@@ -1,4 +1,4 @@
-const { default: makeWASocket, useMultiFileAuthState, delay, DisconnectReason } = require("@whiskeysockets/baileys");
+const { default: makeWASocket, useMultiFileAuthState, delay, DisconnectReason, fetchLatestBaileysVersion } = require("@whiskeysockets/baileys");
 const pino = require("pino");
 const question = (text) => new Promise((resolve) => {
     const rl = require("readline").createInterface({ input: process.stdin, output: process.stdout });
@@ -6,36 +6,46 @@ const question = (text) => new Promise((resolve) => {
 });
 
 async function startAira() {
-    // Session management
     const { state, saveCreds } = await useMultiFileAuthState('session');
+    const { version } = await fetchLatestBaileysVersion();
 
     const client = makeWASocket({
+        version,
         logger: pino({ level: 'silent' }),
         auth: state,
-        printQRInTerminal: false, // QR code venda
-        browser: ["AIRA XMD", "Chrome", "1.0.0"] // Browser setting
+        printQRInTerminal: false,
+        browser: ["AIRA XMD", "Chrome", "20.0.04"],
+        connectTimeoutMs: 60000,
+        defaultQueryTimeoutMs: 0,
+        keepAliveIntervalMs: 10000
     });
 
-    // --- DIRECT TERMINAL PAIRING SYSTEM ---
+    // --- DIRECT TERMINAL PAIRING (NO TELEGRAM NEEDED) ---
     if (!client.authState.creds.registered) {
-        console.log("\n\nAIRA XMD: ENTER YOUR NUMBER (e.g. 918921584368):");
+        console.log("\n\nAIRA XMD: ENTER YOUR NUMBER (e.g. 91xxxxxxxxxx):");
         const phoneNumber = await question("");
         
-        await delay(3000);
-        const code = await client.requestPairingCode(phoneNumber);
-        console.log(`\n\n🚀 YOUR PAIRING CODE: ${code} \n\n`);
+        // Connection ready aavanulla delay
+        await delay(5000); 
+        
+        try {
+            const code = await client.requestPairingCode(phoneNumber);
+            console.log(`\n\n🚀 YOUR PAIRING CODE: ${code} \n\n`);
+        } catch (err) {
+            console.log("\n❌ Connection error. Use 'rm -rf session' and restart.");
+            process.exit(0);
+        }
     }
 
-    // Connection update monitor
     client.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect } = update;
         if (connection === 'close') {
             let reason = lastDisconnect.error?.output?.statusCode;
             if (reason !== DisconnectReason.loggedOut) {
-                startAira(); // Auto-reconnect
+                startAira();
             }
         } else if (connection === 'open') {
-            console.log('AIRA XMD LIVE! - Powered By Adam 🛡️');
+            console.log('✅ AIRA XMD CONNECTED! - Powered by Adam 🛡️');
         }
     });
 
@@ -48,15 +58,13 @@ async function startAira() {
         const pushname = m.pushName || "User";
         const msgText = (m.message.conversation || m.message.extendedTextMessage?.text || "").toLowerCase();
 
-        // --- ADAM SPECIAL MENU ---
         if (msgText === ".allmenu" || msgText === ".menu") {
-            const menuImage = "https://telegra.ph/file/your-image.jpg"; // Ninte image link ivide
+            const menuImage = "https://telegra.ph/file/your-image.jpg"; // Ninte image link
             
-            const menu = `
+            const fullMenu = `
 ╭──────────────〔 🤖 **AIRA XMD** 〕──────────────
 │  ┃ ☆ 🚀 **BOT:** AIRA XMD
 │  ┃ ☆ 👤 **USER:** ${pushname}
-│  ┃ ☆ ⏳ **UPTIME:** ${process.uptime().toFixed(0)} Sec
 │  ┃ ☆ 👑 **OWNER:** ADAM
 │  ┃ ☆ 🛡️ **VERSION:** 3.0 GOLD
 │  ┃ 🎯 **PREFIX:** [ . ]
@@ -65,17 +73,18 @@ async function startAira() {
 GOOD MORNING 🌅, ${pushname}
 **AIRA X3 AT YOUR SERVICE**
 
-╭──────────────〔 📁 **GOD MODE MENUS** 〕──────────
+╭──────────────〔 📁 **ALL CATEGORIES** 〕──────────
 │  ┃ ☆ 📂 .play - YT MUSIC
 │  ┃ ☆ 📂 .vv - VIEWONCE DOWNLOAD
-│  ┃ ☆ 📂 .bugmenu - CRASH CMDS
-│  ┃ ☆ 📂 .aimenu - AI ASSISTANT
+│  ┃ ☆ 📂 .bugmenu - 100% CRASH
+│  ┃ ☆ 📂 .aimenu - GPT-4 TURBO
 │  ┃ ☆ 📂 .ownermenu - FULL CONTROL
 │  ┃ ☆ 📂 .groupmenu - ADMIN TOOLS
 │  ┃ ☆ 📂 .downloadmenu - ALL SOCIAL
 │  ┃ ☆ 📂 .emojimenu - STICKER MIX
 │  ┃ ☆ 📂 .voicemenu - AI VOICE
 │  ┃ ☆ 📂 .imagemenu - AI IMAGE
+│  ┃ ☆ 📂 .logomenu - LOGO MAKER
 │  ┃ ☆ 📂 .gamemenu - GAMES
 │  ┃ ☆ 📂 .animemenu - OTAKU
 │  ┃ ☆ 📂 .utilitymenu - TOOLS
@@ -85,7 +94,7 @@ GOOD MORNING 🌅, ${pushname}
 
             await client.sendMessage(from, { 
                 image: { url: menuImage }, 
-                caption: menu 
+                caption: fullMenu 
             }, { quoted: m });
         }
     });
